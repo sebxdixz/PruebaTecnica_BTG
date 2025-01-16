@@ -40,14 +40,19 @@ def get_posts():
 # Ruta para crear un nuevo post
 @app.route('/posts', methods=['POST'])
 def create_post():
-    data = request.json  # El frontend envía datos en camelCase
-    new_post = Post(
-        name=data['name'],
-        description=data['description']
-    )
+    data = request.get_json()
+    # Aquí creas el post en la base de datos
+    new_post = Post(name=data['name'], description=data['description'])
     db.session.add(new_post)
     db.session.commit()
-    return jsonify({'message': 'Post creado correctamente'})
+
+    # Retorna el post recién creado, incluyendo el ID generado automáticamente
+    return jsonify({
+        'id': new_post.id,
+        'name': new_post.name,
+        'description': new_post.description
+    }), 201
+
 
 # Ruta para eliminar un post por ID
 @app.route('/posts/<int:post_id>', methods=['DELETE'])
@@ -58,6 +63,7 @@ def delete_post(post_id):
         db.session.commit()
         return jsonify({'message': 'Post eliminado correctamente'})
     return jsonify({'message': 'Post no encontrado'}), 404
+
 
 if __name__ == '__main__':
     app.run(debug=True)

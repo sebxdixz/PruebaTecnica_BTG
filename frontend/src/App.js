@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { Button, Form, ListGroup, Container, Row, Col } from "react-bootstrap";
 
 function App() {
@@ -7,22 +7,29 @@ function App() {
   const [description, setDescription] = useState("");
   const [filter, setFilter] = useState("");
 
-    // Eliminar un post por ID
-  const handleDeletePost = useCallback((id) => {
+  // Eliminar un post por ID
+  const handleDeletePost = (id) => {
+    console.log("Eliminando post con id:", id); // Asegúrate de que el id esté definido
+    if (id) { // Verificar que el id no sea undefined o null
       fetch(`http://localhost:5000/posts/${id}`, { method: "DELETE" })
         .then((response) => response.json())
         .then(() => {
-          setPosts(posts.filter((post) => post.id !== id)); // Actualizar el estado local
+          // Actualizar el estado local sin depender de la lista de posts actual
+          setPosts((prevPosts) => prevPosts.filter((post) => post.id !== id));
         })
         .catch((error) => console.error("Error al eliminar post:", error));
-    }, [posts]); // No necesitamos volver a definir la función si no cambia
+    } else {
+      console.error("No se proporcionó un id válido para eliminar el post.");
+    }
+  };
+
   // Cargar posts desde el backend
   useEffect(() => {
     fetch("http://localhost:5000/posts")
       .then((response) => response.json())
       .then((data) => setPosts(data))
       .catch((error) => console.error("Error al cargar posts:", error));
-  }, [handleDeletePost]); // This dependency will trigger useEffect after handleDelete is called
+  }, []); // Solo se ejecuta una vez al montar el componente
 
   // Crear un nuevo post
   const handleAddPost = () => {
@@ -34,8 +41,10 @@ function App() {
         body: JSON.stringify(newPost),
       })
         .then((response) => response.json())
-        .then(() => {
-          setPosts([...posts, newPost]); // Actualizar el estado local
+        .then((data) => {
+          // Asegúrate de que el nuevo post incluya el id
+          const postWithId = { ...newPost, id: data.id };
+          setPosts((prevPosts) => [...prevPosts, postWithId]); // Añadir el post con id
           setName("");
           setDescription("");
         })
@@ -44,8 +53,6 @@ function App() {
       alert("Por favor, completa ambos campos antes de agregar un post.");
     }
   };
-
-
 
   // Manejar el filtro
   const handleFilterChange = (e) => {
@@ -60,6 +67,7 @@ function App() {
   );
 
   return (
+    <div className="bg-light p-4 rounded shadow-sm vh-100" style={{backgroundColor: '#FAF9F6'}}>
     <Container className="mt-4">
       <Row>
         <Col>
@@ -134,6 +142,7 @@ function App() {
         </Col>
       </Row>
     </Container>
+    </div>
   );
 }
 
